@@ -1,0 +1,20 @@
+# ITSM policy. Floors only ever tighten what the resolver decides; nothing here
+# can loosen a tier. This is where the enterprise draws bounds that improving the
+# model does not erode.
+
+confidence_threshold: 0.85
+
+floors:
+  # Per-tool floors would go here, e.g.  reset_credentials: propose
+  tools: {}
+
+  # Class floors match on any subset of consequence properties.
+  classes:
+    # Tearing down an account is irreversible and hits the customer's systems.
+    # It is simply out of scope for the agent to do on its own, at any
+    # confidence. This is the floor the "blocked" run runs into.
+    - name: irreversible-system-out-of-scope
+      match:
+        reversibility: irreversible
+        blast_radius: system
+      min_tier: refuse
