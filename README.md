@@ -1,5 +1,10 @@
 # Consequence Gate
 
+![License: MIT](https://img.shields.io/badge/License-MIT-informational)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![Tests](https://img.shields.io/badge/tests-39%20passing-brightgreen)
+![Dependencies](https://img.shields.io/badge/deps-PyYAML-lightgrey)
+
 A governance layer that sits between an agent loop and its tools and decides whether a given call is allowed to execute — based not on how confident the model is, but on what being wrong would cost.
 
 ---
@@ -264,3 +269,11 @@ pip install -e ".[dev]"
 pytest                              # 39 tests; test_resolver.py is the important one
 python examples/itsm/demo.py        # all three runs + computed metrics
 ```
+
+The only runtime dependency is PyYAML (for loading policy files); `pytest` is the only dev dependency.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE). Consequence metadata is declared, thresholds are hand-tuned, and the severity table is a defended default; all three are meant to be argued with and adapted.
