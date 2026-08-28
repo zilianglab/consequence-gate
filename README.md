@@ -2,7 +2,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-informational)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
-![Tests](https://img.shields.io/badge/tests-39%20passing-brightgreen)
+[![Tests](https://github.com/zilianglab/consequence-gate/actions/workflows/tests.yml/badge.svg)](https://github.com/zilianglab/consequence-gate/actions/workflows/tests.yml)
 ![Dependencies](https://img.shields.io/badge/deps-PyYAML-lightgrey)
 
 A governance layer that sits between an agent loop and its tools and decides whether a given call is allowed to execute — based not on how confident the model is, but on what being wrong would cost.
@@ -67,7 +67,7 @@ These map to a **severity table** — the whole base policy in one place, so it 
 | **system**   | execute-notify   | propose          | propose      |
 | **external** | propose          | propose          | propose      |
 
-Then three modifiers, each tightening by one tier: `detection_latency == "unbounded"`, `absorbed_by in ("customer", "regulator")`, and confidence below threshold. Nothing ever tightens looser.
+Then three modifiers, each tightening by one tier: `detection_latency == "unbounded"`, `absorbed_by in ("customer", "regulator")`, and confidence below threshold. Nothing ever loosens.
 
 > **One deviation from the obvious table.** A naive version puts `refuse` in the external/irreversible cell. This one puts `propose`, and the base table never reaches `refuse` at all. `refuse` means "out of scope regardless of confidence" — a statement about what the agent is *permitted* to do, which is a policy judgment, not something derivable from consequence properties. Emailing a customer is maximally consequential and still legitimately in scope *with a human in the loop*. So the severity heuristic tops out at "a human must commit," and `refuse` is expressed exclusively through policy floors. This also gives the policy layer a real job instead of a table that has already decided everything.
 
@@ -138,13 +138,15 @@ task completion rate         76.9%
 success rate                100.0%
 gate overhead   p50/p95     0.003 / 0.009 ms
 tool latency    p50/p95     0.001 / 0.001 ms
-cost per action             0.320
+cost per action             0.320 nominal units
 escalation precision         33.3%
 cost-weighted error rate     14.3%
 override rate by class
     costly/system                 0.0%
     irreversible/external       100.0%
 ```
+
+*These figures come from the three scripted demo runs — three calls stopped, one rejected, so escalation precision is 1/3. They illustrate what the metrics **mean**; they are not a calibration sample, and the defaults should not be read off a handful of hand-built traces.*
 
 **Task completion rate is the wrong number to optimize.** It improves monotonically as you loosen the gate — an organization that manages to completion rate will, rationally, optimize the gate away. The two numbers that actually tell you whether the gate is set right pull in opposite directions and have to be read together:
 
@@ -228,6 +230,7 @@ Naming the limits is what separates this from a demo.
 - **Not a framework and not a planner.** It wraps a loop you already have and has no opinion about how the agent chooses actions.
 - **Consequence metadata is declared, not inferred.** Each tool's consequences are asserted by a human via `@consequence`. The `source` field (`declared` / `inferred` / `policy`) is a hook for the argument that some of this could be *derived from observed behavior* — a tool that quietly touches production could be reclassified from what it actually does rather than what it claims. That's a real idea and deliberately out of scope here.
 - **Thresholds and the severity table are hand-tuned.** The single confidence threshold, the one-tier bump size, and every cell of the table are defaults, not learned. They're meant to be argued with — change a cell you disagree with, but say why.
+- **Re-examination re-queues; it does not compensate.** When a rejection claws back a call that already executed, the gate returns it to the human queue for review — it does not try to automatically undo or reverse what ran. Whether an already-executed call needs a compensating action (`update_ticket_status`) or nothing was actually sent (`draft_response`) is a judgment left to the human, by design.
 - **The approval queue is a CLI concept, not a product.** Commit/reject are API calls (`g.approve`, `g.reject`) with a scripted decider for the demos. No web UI, by design.
 
 ---

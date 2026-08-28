@@ -434,11 +434,11 @@
     <div class="section-head">
       <div class="section-num">05 — reading the gate</div>
       <h2>Metrics, and the number not to chase</h2>
-      <p>All computed from the audit log across the three runs — nothing hardcoded.</p>
+      <p>All computed from the audit log across the three runs — nothing hardcoded. These are illustrative of what each metric <em>means</em>, not a calibration sample: the figures below come from just three scripted runs (escalation precision is 1 of 3 stopped calls), so read them as a worked example, not as tuned defaults.</p>
     </div>
     <div class="metrics">
       <div class="metric"><div class="v">76.9%</div><div class="l">task completion rate</div></div>
-      <div class="metric"><div class="v">33.3%</div><div class="l">escalation precision — of what it stopped, what a human actually rejected</div></div>
+      <div class="metric"><div class="v">33.3%</div><div class="l">escalation precision (1 of 3 stopped) — of what it stopped, what a human actually rejected</div></div>
       <div class="metric"><div class="v">14.3%</div><div class="l">cost-weighted error rate — mistakes weighted by consequence, not counted</div></div>
       <div class="metric"><div class="v">~3µs</div><div class="l">gate overhead per call (p50) — essentially free next to the tools</div></div>
     </div>

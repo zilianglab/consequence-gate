@@ -59,7 +59,7 @@ class Metrics:
             f"  success rate                {_pct(self.success_rate)}",
             f"  gate overhead   p50/p95     {self.gate_overhead_p50_ms:.3f} / {self.gate_overhead_p95_ms:.3f} ms",
             f"  tool latency    p50/p95     {self.tool_latency_p50_ms:.3f} / {self.tool_latency_p95_ms:.3f} ms",
-            f"  cost per action             {self.cost_per_action:.3f}",
+            f"  cost per action             {self.cost_per_action:.3f} nominal units",
             f"  escalation precision        {_pct(self.escalation_precision)}",
             f"  cost-weighted error rate    {_pct(self.cost_weighted_error_rate)}",
             "  override rate by class",
