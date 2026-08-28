@@ -7,6 +7,8 @@
 
 A governance layer that sits between an agent loop and its tools and decides whether a given call is allowed to execute — based not on how confident the model is, but on what being wrong would cost.
 
+**[📊 Visual walkthrough →](https://zilianglab.github.io/consequence-gate/)** — the four tiers, how one call is decided, and the three demo runs, told visually.
+
 ---
 
 ## The argument

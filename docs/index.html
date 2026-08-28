@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A visual walkthrough of how Consequence Gate resolves each agent tool call into an autonomy tier, with the three ITSM demo runs told visually.">
+<meta property="og:title" content="Consequence Gate">
+<meta property="og:description" content="What being wrong costs, not how sure the model is. A visual walkthrough of the agent-governance gate.">
+<meta property="og:type" content="website">
+<title>Consequence Gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --ground:#eef1f4;
+    --surface:#ffffff;
+    --surface-2:#f6f8fa;
+    --ink:#161c24;
+    --muted:#5a6672;
+    --faint:#8794a1;
+    --hairline:#dce2e8;
+    --hairline-strong:#c6ced6;
+    --accent:#3b5bdb;
+    --accent-ink:#2c3fa0;
+
+    --t-exec:#1e9e62;
+    --t-notify:#2e93ac;
+    --t-propose:#cf8a2c;
+    --t-refuse:#d14343;
+
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 8px 24px -12px rgba(20,30,45,.18);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0d1116;
+      --surface:#151b22;
+      --surface-2:#1b232c;
+      --ink:#e7ecf1;
+      --muted:#9aa7b4;
+      --faint:#6b7885;
+      --hairline:#262f39;
+      --hairline-strong:#33404c;
+      --accent:#7b93ff;
+      --accent-ink:#a9b8ff;
+      --t-exec:#37c489;
+      --t-notify:#49b7d3;
+      --t-propose:#e5a445;
+      --t-refuse:#ee6a6a;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0d1116;
+    --surface:#151b22;
+    --surface-2:#1b232c;
+    --ink:#e7ecf1;
+    --muted:#9aa7b4;
+    --faint:#6b7885;
+    --hairline:#262f39;
+    --hairline-strong:#33404c;
+    --accent:#7b93ff;
+    --accent-ink:#a9b8ff;
+    --t-exec:#37c489;
+    --t-notify:#49b7d3;
+    --t-propose:#e5a445;
+    --t-refuse:#ee6a6a;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  .mono{font-family:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace}
+
+  h1,h2,h3{font-family:"Archivo", sans-serif;font-weight:800;line-height:1.08;text-wrap:balance;margin:0}
+  p{margin:0}
+  a{color:var(--accent-ink);text-decoration:none;border-bottom:1px solid color-mix(in srgb, var(--accent) 40%, transparent)}
+  a:hover{border-bottom-color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);
+  }
+  .section-num{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--ground) 86%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--hairline)}
+  .topbar-in{max-width:920px;margin:0 auto;padding:11px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:9px;font-family:"Archivo";font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand .dot{width:11px;height:11px;border-radius:3px;background:
+     linear-gradient(135deg,var(--t-exec),var(--t-notify) 40%,var(--t-propose) 70%,var(--t-refuse));}
+  .toolbtn{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);
+    background:var(--surface);border:1px solid var(--hairline);border-radius:8px;
+    padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  }
+  .toolbtn:hover{border-color:var(--hairline-strong);color:var(--ink)}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:76px 0 30px}
+  .hero h1{font-size:clamp(38px,7vw,68px);letter-spacing:-.03em}
+  .hero .lede{margin-top:22px;font-size:clamp(18px,2.4vw,22px);line-height:1.5;color:var(--ink);max-width:30em}
+  .hero .lede b{font-weight:600;color:var(--accent-ink)}
+  .hero .sub{margin-top:16px;color:var(--muted);max-width:34em}
+
+  .thesis{
+    margin-top:34px;display:grid;grid-template-columns:1fr 1fr;gap:1px;
+    background:var(--hairline);border:1px solid var(--hairline);border-radius:var(--radius);overflow:hidden;
+  }
+  .thesis > div{background:var(--surface);padding:20px 22px}
+  .thesis .k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .thesis .no{color:var(--muted)}
+  .thesis .no s{text-decoration-color:var(--t-refuse);text-decoration-thickness:2px}
+  .thesis .yes{color:var(--ink);font-weight:500}
+  @media(max-width:620px){.thesis{grid-template-columns:1fr}}
+
+  /* ---------- generic section ---------- */
+  section{padding:46px 0;border-top:1px solid var(--hairline)}
+  .section-head{margin-bottom:26px}
+  .section-head h2{font-size:clamp(24px,3.6vw,32px);letter-spacing:-.02em;margin-top:10px}
+  .section-head p{margin-top:12px;color:var(--muted);max-width:44em}
+
+  /* ---------- tiers ---------- */
+  .tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:720px){.tiers{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.tiers{grid-template-columns:1fr}}
+  .tier{
+    background:var(--surface);border:1px solid var(--hairline);border-radius:12px;
+    padding:15px 15px 16px;position:relative;overflow:hidden;box-shadow:var(--shadow);
+  }
+  .tier::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+  .tier .glyph{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--c);letter-spacing:.05em}
+  .tier .name{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:14.5px;margin-top:9px;color:var(--ink)}
+  .tier .desc{margin-top:8px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+  .t-exec{--c:var(--t-exec)} .t-notify{--c:var(--t-notify)} .t-propose{--c:var(--t-propose)} .t-refuse{--c:var(--t-refuse)}
+
+  .ramp-note{margin-top:16px;font-size:13.5px;color:var(--faint);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ramp-note .bar{height:6px;border-radius:3px;flex:1;min-width:120px;background:linear-gradient(90deg,var(--t-exec),var(--t-notify),var(--t-propose),var(--t-refuse))}
+
+  /* ---------- decision trace (one call) ---------- */
+  .decide{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .decide-head{padding:16px 20px;border-bottom:1px solid var(--hairline);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--surface-2)}
+  .decide-head .call{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600}
+  .decide-head .conf{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:14px 20px 4px}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;padding:4px 9px;border-radius:20px;border:1px solid var(--hairline-strong);color:var(--muted);background:var(--surface-2)}
+  .chip b{color:var(--ink);font-weight:600}
+
+  .steps{padding:8px 20px 20px}
+  .step{display:grid;grid-template-columns:26px 1fr auto;gap:14px;align-items:start;padding:14px 0;border-bottom:1px dashed var(--hairline)}
+  .step:last-child{border-bottom:0}
+  .step .idx{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--faint);padding-top:2px}
+  .step .body .t{font-weight:600;font-size:14.5px}
+  .step .body .d{color:var(--muted);font-size:13.5px;margin-top:3px}
+  .step .body .d code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--surface-2);border:1px solid var(--hairline);padding:1px 5px;border-radius:5px;color:var(--ink)}
+
+  .pill{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;
+    color:var(--c);background:color-mix(in srgb,var(--c) 15%, var(--surface));border:1px solid color-mix(in srgb,var(--c) 40%, transparent)}
+  .pill.ghost{color:var(--faint);background:transparent;border-color:var(--hairline);font-weight:500}
+  .pill-exec{--c:var(--t-exec)} .pill-notify{--c:var(--t-notify)} .pill-propose{--c:var(--t-propose)} .pill-refuse{--c:var(--t-refuse)}
+
+  .verdict{padding:16px 20px;display:flex;align-items:center;gap:14px;background:color-mix(in srgb,var(--t-refuse) 9%, var(--surface));border-top:1px solid color-mix(in srgb,var(--t-refuse) 30%, transparent)}
+  .verdict .big{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--t-refuse);font-size:15px}
+  .verdict .txt{font-size:13.5px;color:var(--ink)}
+  .verdict .txt b{color:var(--t-refuse)}
+
+  /* ---------- asymmetry claim ---------- */
+  .claim{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--hairline);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+  .claim h3{font-size:clamp(20px,3vw,26px);letter-spacing:-.02em}
+  .arrows{display:flex;gap:16px;margin:22px 0 6px;flex-wrap:wrap}
+  .arrow{flex:1;min-width:220px;border:1px solid var(--hairline);border-radius:10px;padding:14px 16px;background:var(--surface)}
+  .arrow .h{display:flex;align-items:center;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600}
+  .arrow.ok .h{color:var(--t-exec)} .arrow.no .h{color:var(--faint)}
+  .arrow .h .g{font-size:15px}
+  .arrow p{margin-top:8px;font-size:13.5px;color:var(--muted)}
+
+  /* ---------- runs ---------- */
+  .run{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-top:18px}
+  .run-head{padding:16px 20px;border-bottom:1px solid var(--hairline);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .run-head .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--faint);font-weight:600}
+  .run-head h3{font-size:18px;letter-spacing:-.01em}
+  .run-head .tag{margin-left:auto;font-size:12.5px;color:var(--muted)}
+  .rows{padding:6px 20px 16px}
+  .row{display:grid;grid-template-columns:4px 1fr auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--hairline)}
+  .row:last-child{border-bottom:0}
+  .row .stripe{align-self:stretch;border-radius:3px;background:var(--c);min-height:34px}
+  .row.exec{--c:var(--t-exec)} .row.notify{--c:var(--t-notify)} .row.propose{--c:var(--t-propose)} .row.refuse{--c:var(--t-refuse)}
+  .row .tool{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .row .what{font-size:13px;color:var(--muted);margin-top:2px}
+  .row .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .linktag{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent-ink);background:color-mix(in srgb,var(--accent) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);padding:2px 7px;border-radius:6px;display:inline-block;margin-top:6px}
+
+  .transition{display:flex;align-items:center;gap:8px}
+  .transition .to{font-size:13px;color:var(--faint)}
+
+  .interrupt{margin:4px 20px 16px;padding:13px 16px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--t-refuse) 45%,transparent);
+    background:color-mix(in srgb,var(--t-refuse) 8%,var(--surface));display:flex;gap:12px;align-items:flex-start}
+  .interrupt .badge{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--t-refuse);border:1px solid color-mix(in srgb,var(--t-refuse) 40%,transparent);padding:2px 8px;border-radius:20px;white-space:nowrap;margin-top:1px}
+  .interrupt .txt{font-size:13.5px}
+  .interrupt .txt b{color:var(--ink)}
+  .interrupt code{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--surface);border:1px solid var(--hairline);padding:1px 5px;border-radius:5px}
+
+  .reexam-head{padding:2px 20px 0;font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--t-propose);font-weight:600}
+
+  /* ---------- metrics ---------- */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:720px){.metrics{grid-template-columns:1fr 1fr}}
+  .metric{background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .metric .v{font-family:"Archivo";font-weight:800;font-size:30px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .metric .l{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.04em;color:var(--muted);margin-top:6px;line-height:1.4}
+  .metric.flag{border-color:color-mix(in srgb,var(--t-refuse) 40%,var(--hairline))}
+  .metric.flag .v{color:var(--t-refuse)}
+  .trap{margin-top:16px;padding:16px 18px;border-left:3px solid var(--t-refuse);background:var(--surface-2);border-radius:0 10px 10px 0}
+  .trap b{color:var(--ink)}
+  .trap p{color:var(--muted);font-size:14px}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--hairline);padding:34px 0 60px;color:var(--muted);font-size:13.5px}
+  footer .row2{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+  .repo{font-family:"IBM Plex Mono",monospace;font-size:13px}
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease, transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span class="dot"></span> Consequence Gate</div>
+    <button class="toolbtn" id="themeBtn" aria-label="Toggle color theme">◐ theme</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Agent governance · demo walkthrough</div>
+    <h1>What being wrong costs, not how sure the model is.</h1>
+    <p class="lede">Consequence Gate sits between an agent and its tools and decides whether each call may run — by resolving it into one of four <b>autonomy tiers</b>.</p>
+    <p class="sub">Below: what the tiers mean, how a single call gets decided, and what actually happened in the three demo runs — the same runs whose terminal output was hard to read, told visually.</p>
+
+    <div class="thesis">
+      <div>
+        <div class="k">The wrong question</div>
+        <div class="no">“How <s>confident</s> is the model?” Reading a ticket and deleting an account have similar success rates. Confidence can’t tell them apart.</div>
+      </div>
+      <div>
+        <div class="k">The right question</div>
+        <div class="yes">What does being wrong cost, who absorbs it, and how long before anyone notices?</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="reveal">
+    <div class="section-head">
+      <div class="section-num">01 — the vocabulary</div>
+      <h2>Four tiers of autonomy</h2>
+      <p>Every call lands in exactly one. They run from “just do it” to “never, regardless of confidence.” In the run panels below, each call carries its tier as a colored stripe.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier t-exec">
+        <div class="glyph">[ OK ]</div>
+        <div class="name">execute</div>
+        <div class="desc">Run it and log it. Reversible, contained — no one needs to look.</div>
+      </div>
+      <div class="tier t-notify">
+        <div class="glyph">[ OK ]</div>
+        <div class="name">execute_notify</div>
+        <div class="desc">Run it, but surface it for review. Costly to undo, so it doesn’t happen silently.</div>
+      </div>
+      <div class="tier t-propose">
+        <div class="glyph">[ HOLD ]</div>
+        <div class="name">propose</div>
+        <div class="desc">Prepared but held. A human must commit before it executes.</div>
+      </div>
+      <div class="tier t-refuse">
+        <div class="glyph">[ STOP ]</div>
+        <div class="name">refuse</div>
+        <div class="desc">Out of scope, full stop. No confidence level unlocks it.</div>
+      </div>
+    </div>
+    <div class="ramp-note"><span class="bar"></span><span>more autonomy&nbsp;→&nbsp;less autonomy</span></div>
+  </section>
+
+  <section class="reveal">
+    <div class="section-head">
+      <div class="section-num">02 — the mechanism</div>
+      <h2>How one call gets decided</h2>
+      <p>The agent proposed <span class="mono">deprovision_account</span> and was 94% sure. Here is every step the gate took, in order — the running verdict on the right. Watch where the confidence goes.</p>
+    </div>
+
+    <div class="decide">
+      <div class="decide-head">
+        <div class="call">deprovision_account(account=<span style="color:var(--muted)">"acme\jdoe"</span>)</div>
+        <div class="conf">agent confidence · 0.94</div>
+      </div>
+      <div class="chips">
+        <span class="chip">reversibility: <b>irreversible</b></span>
+        <span class="chip">blast radius: <b>system</b></span>
+        <span class="chip">absorbed by: <b>customer</b></span>
+        <span class="chip">detection: <b>days</b></span>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="idx">1</div>
+          <div class="body"><div class="t">Base severity</div><div class="d">Look <code>irreversible × system</code> up in the severity table.</div></div>
+          <span class="pill pill-propose">propose</span>
+        </div>
+        <div class="step">
+          <div class="idx">2</div>
+          <div class="body"><div class="t">Consequence modifiers</div><div class="d">The customer absorbs the cost → tighten one tier. But auto-modifiers are <b>capped at propose</b> — the heuristic never refuses on its own.</div></div>
+          <span class="pill pill-propose">propose</span>
+        </div>
+        <div class="step">
+          <div class="idx">3</div>
+          <div class="body"><div class="t">Confidence</div><div class="d">0.94 is above the 0.85 threshold, so it adds no caution. And confidence can only ever <b>tighten</b> — never loosen.</div></div>
+          <span class="pill ghost">no change</span>
+        </div>
+        <div class="step">
+          <div class="idx">4</div>
+          <div class="body"><div class="t">Policy floor</div><div class="d">The enterprise marked <code>irreversible + system</code> out of scope. Policy is the <b>only</b> thing that can reach refuse.</div></div>
+          <span class="pill pill-refuse">refuse</span>
+        </div>
+      </div>
+      <div class="verdict">
+        <div class="big">→ REFUSE</div>
+        <div class="txt">The model’s 94% confidence <b>never entered the outcome.</b> A better model earns more autonomy inside the bounds — but never moves the bound.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="section-num" style="margin-bottom:14px">03 — the one rule that makes it work</div>
+    <div class="claim">
+      <h3>Confidence can make the gate stricter, never looser.</h3>
+      <div class="arrows">
+        <div class="arrow ok">
+          <div class="h"><span class="g">↓</span> low confidence</div>
+          <p>Pulls a call toward less autonomy — a reversible action drops from execute to “surface it.” The gate gets more cautious.</p>
+        </div>
+        <div class="arrow no">
+          <div class="h"><span class="g">↑</span> high confidence</div>
+          <p>Buys nothing. It can’t lift an irreversible action out of “a human commits,” and it can’t buy past a policy floor.</p>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:13.5px;margin-top:6px">Mechanically, confidence appears in the resolver in exactly one place: a below-threshold tightening bump. There is no branch anywhere that loosens as confidence rises — so the claim is a property you can test, not a promise.</p>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="section-head">
+      <div class="section-num">04 — the runs</div>
+      <h2>Three runs, three points</h2>
+      <p>An IT-support agent resolving tickets with eight fake tools. Same gate throughout — only the situation changes.</p>
+    </div>
+
+    <!-- CLEAN -->
+    <div class="run">
+      <div class="run-head"><span class="n">RUN 1</span><h3>Clean — the gate stays out of the way</h3><span class="tag">0 sent to a human</span></div>
+      <div class="rows">
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">read_ticket</div><div class="what">Read the ticket.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">search_kb</div><div class="what">Searched the knowledge base.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">lookup_ci</div><div class="what">Looked up the affected system record.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">draft_response</div><div class="what">Drafted a reply — nothing sent.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row notify"><div class="stripe"></div><div><div class="tool">update_ticket_status</div><div class="what">Marked the ticket resolved — costly to undo, so it’s logged for review.</div></div><div class="rt"><span class="pill pill-notify">execute_notify</span></div></div>
+      </div>
+    </div>
+
+    <!-- BLOCKED -->
+    <div class="run">
+      <div class="run-head"><span class="n">RUN 2</span><h3>Blocked — high confidence meets a hard floor</h3><span class="tag">refused on policy</span></div>
+      <div class="rows">
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">read_ticket</div><div class="what">Read the ticket.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row propose"><div class="stripe"></div><div><div class="tool">reset_credentials</div><div class="what">Wanted to reset the user’s credentials — system-scope, so it’s held for a human.</div></div><div class="rt"><span class="pill pill-propose">propose</span></div></div>
+        <div class="row refuse"><div class="stripe"></div><div><div class="tool">deprovision_account</div><div class="what">Wanted to delete the account, and was 94% sure.</div></div><div class="rt"><span class="pill pill-refuse">refuse</span><span class="linktag">floor: irreversible-system</span></div></div>
+      </div>
+    </div>
+
+    <!-- OVERRIDE -->
+    <div class="run">
+      <div class="run-head"><span class="n">RUN 3</span><h3>Override — a rejection is evidence about context</h3><span class="tag">the interesting one</span></div>
+      <div class="rows">
+        <div class="row exec" id="src"><div class="stripe"></div><div><div class="tool">read_ticket <span style="color:var(--faint);font-weight:400">INC-4471</span></div><div class="what">Read the ticket — <b style="color:var(--t-refuse)">its contact email is wrong.</b></div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">search_kb</div><div class="what">Searched the knowledge base.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+        <div class="row propose"><div class="stripe"></div><div><div class="tool">email_customer</div><div class="what">Queued an email to that (wrong) address. Held — emailing a customer is irreversible &amp; external.</div></div><div class="rt"><span class="pill pill-propose">propose</span></div></div>
+        <div class="row notify"><div class="stripe"></div><div><div class="tool">update_ticket_status</div><div class="what">Marked the ticket resolved. Ran.</div></div><div class="rt"><span class="pill pill-notify">execute_notify</span></div></div>
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">draft_response</div><div class="what">Drafted a closing note to the wrong address. Ran.</div></div><div class="rt"><span class="pill pill-exec">execute</span></div></div>
+      </div>
+
+      <div class="interrupt">
+        <span class="badge">REJECTED</span>
+        <div class="txt">A human rejects the queued email as <code>wrong_target</code>. Most systems would log the fix and move on — leaving the two calls that already ran on the same bad ticket sitting there, approved.</div>
+      </div>
+
+      <div class="reexam-head">↳ the gate re-examines the trace</div>
+      <div class="rows">
+        <div class="row exec"><div class="stripe"></div><div><div class="tool">read_ticket <span style="color:var(--faint);font-weight:400">INC-4471</span></div><div class="what">Traced as the origin of the bad recipient.</div></div><div class="rt"><span class="pill ghost">flagged: source</span></div></div>
+        <div class="row propose"><div class="stripe"></div><div>
+          <div class="tool">update_ticket_status</div>
+          <div class="what">Shared the same ticket → context now suspect.</div>
+          <span class="linktag">shares source_record INC-4471</span>
+        </div><div class="rt"><div class="transition"><span class="pill pill-notify" style="opacity:.55">was notify</span><span class="to">→</span><span class="pill pill-propose">propose</span></div></div></div>
+        <div class="row propose"><div class="stripe"></div><div>
+          <div class="tool">draft_response</div>
+          <div class="what">Built on the same wrong address → context now suspect.</div>
+          <span class="linktag">shares target ext-partner@wrong.example</span>
+        </div><div class="rt"><div class="transition"><span class="pill pill-exec" style="opacity:.55">was execute</span><span class="to">→</span><span class="pill pill-propose">propose</span></div></div></div>
+      </div>
+      <div class="interrupt" style="border-style:solid;border-color:color-mix(in srgb,var(--t-propose) 45%,transparent);background:color-mix(in srgb,var(--t-propose) 8%,var(--surface))">
+        <span class="badge" style="color:var(--t-propose);border-color:color-mix(in srgb,var(--t-propose) 40%,transparent)">RE-QUEUED</span>
+        <div class="txt">Both already-executed calls are <b>pulled back into the queue</b> for a human. One wrong answer became a reason to distrust everything built on the same misread context.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="section-head">
+      <div class="section-num">05 — reading the gate</div>
+      <h2>Metrics, and the number not to chase</h2>
+      <p>All computed from the audit log across the three runs — nothing hardcoded.</p>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="v">76.9%</div><div class="l">task completion rate</div></div>
+      <div class="metric"><div class="v">33.3%</div><div class="l">escalation precision — of what it stopped, what a human actually rejected</div></div>
+      <div class="metric"><div class="v">14.3%</div><div class="l">cost-weighted error rate — mistakes weighted by consequence, not counted</div></div>
+      <div class="metric"><div class="v">~3µs</div><div class="l">gate overhead per call (p50) — essentially free next to the tools</div></div>
+    </div>
+    <div class="trap">
+      <p><b>Completion rate is the trap.</b> It rises as you loosen the gate, so an org that optimizes it will optimize the gate away. Escalation precision and cost-weighted error pull against each other and have to be read together — tighten the gate and error falls, but so does precision. Neither alone tells you if the gate is set right.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="row2">
+      <div>MIT-licensed · pure resolver, append-only audit, computed metrics.</div>
+      <a class="repo" href="https://github.com/zilianglab/consequence-gate">github.com/zilianglab/consequence-gate</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  (function(){
+    var btn = document.getElementById('themeBtn');
+    var root = document.documentElement;
+    function stored(){ try { return localStorage.getItem('cg-theme'); } catch(e){ return null; } }
+    var t = stored();
+    if(t){ root.setAttribute('data-theme', t); }
+    btn.addEventListener('click', function(){
+      var cur = root.getAttribute('data-theme');
+      if(!cur){ cur = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+      var next = cur === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('cg-theme', next); } catch(e){}
+    });
+
+    if('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+      var io = new IntersectionObserver(function(es){
+        es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, {threshold:.12});
+      document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+    } else {
+      document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+    }
+  })();
+</script>
+
+</body>
+</html>
